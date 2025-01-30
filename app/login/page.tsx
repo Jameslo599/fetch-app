@@ -3,6 +3,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
+import loginSchema from '@/lib/loginSchema';
 
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -14,35 +15,49 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-
-const formSchema = z.object({
-  firstName: z.coerce
-    .string()
-    .min(2, { message: 'Must be at least 2 characters' })
-    .max(20, { message: 'Max 20 characters' }),
-  email: z.coerce
-    .string()
-    .email({ message: 'Invalid email address' })
-    .min(5, { message: 'Must be at least 5 characters' }),
-});
+import { useRouter } from 'next/navigation';
 
 function LoginForm() {
   // Define form
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      firstName: '',
-      email: '',
+      firstName: 'Rolf',
+      email: 'rolf@gmail.com',
     },
   });
 
   // Define submit handler
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  const router = useRouter();
+  async function onSubmit(values: z.infer<typeof loginSchema>) {
+    try {
+      const res = await fetch(
+        'https://frontend-take-home-service.fetch.com/auth/login',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: values.firstName,
+            email: values.email,
+          }),
+          credentials: 'include',
+        }
+      );
+      if (!res.ok) {
+        throw new Error(`HTTP Error. Status: ${res.status}`);
+      }
+      router.push('/browse/dogs');
+    } catch (error) {
+      console.log(error);
+    }
   }
 
+  const { formState } = form;
+
   return (
-    <div className="mx-auto h-screen bg-orange-800">
+    <div className="mx-auto h-screen bg-opacity-0">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -56,10 +71,10 @@ function LoginForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>First Name</FormLabel>
-                <FormMessage />
                 <FormControl>
                   <Input placeholder="Oliver" {...field} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -69,16 +84,20 @@ function LoginForm() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Email</FormLabel>
-                <FormMessage />
                 <FormControl>
                   <Input placeholder="oliverthebeagle@aol.com" {...field} />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
           <div className="w-full text-center">
-            <Button type="submit" className="px-12 bg-slate-800">
-              Log In
+            <Button
+              type="submit"
+              className="px-12 bg-slate-800"
+              disabled={formState.isSubmitting}
+            >
+              {formState.isSubmitting ? 'Logging In...' : 'Log In'}
             </Button>
           </div>
         </form>

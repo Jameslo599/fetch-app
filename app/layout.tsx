@@ -18,7 +18,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${ebGaramond.className} antialiased`}>{children}</body>
+      <body
+        className={`${ebGaramond.className} antialiased bg-custom-gradient`}
+      >
+        {children}
+      </body>
     </html>
   );
 }
